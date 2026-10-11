@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <img src="logo.png" alt="Логотип" class="logo">
+    <h1>Регистрация</h1>
+
+    <form id="regForm" action="/register" method="POST" novalidate>
+      <label>
+        Логин
+        <input type="text" name="login" id="login" required minlength="3" maxlength="20"
+               pattern="[A-Za-z0-9_]+" autocomplete="username">
+        <span class="hint" id="loginHint"></span>
+      </label>
+
+      <label>
+        Email
+        <input type="email" name="email" id="email" required maxlength="254" autocomplete="email">
+        <span class="hint">Например name@example.com</span>
+      </label>
+
+      <label>
+        Пароль
+        <input type="password" name="password" id="password" required minlength="6" maxlength="128" autocomplete="new-password">
+        <span class="hint">От 6 до 128 символов, хотя бы одна буква и одна цифра</span>
+      </label>
+
+      <ul class="errors" id="formErrors"></ul>
+
+      <button type="submit" class="button">Зарегистрироваться</button>
+    </form>
+    <p class="switch">Уже зарегистрированы? <a href="login.html">Войти</a></p>
+  </main>
+
+  <script>
+    const loginInput = document.getElementById('login');
+    const loginHint = document.getElementById('loginHint');
+    const regForm = document.getElementById('regForm');
+    let checkTimer;
+
+    const serverOrigin = location.port === '3000' ? '' : 'http://localhost:3000';
+    regForm.action = serverOrigin + '/register';
+
+    loginInput.addEventListener('input', () => {
+      clearTimeout(checkTimer);
+      const value = loginInput.value.trim();
+      if (value.length < 3) {
+        loginHint.textContent = '';
+        loginHint.className = 'hint';
+        return;
+      }
+      checkTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(serverOrigin + '/api/check-login?login=' + encodeURIComponent(value));
+          const data = await res.json();
+          if (!data.valid) {
+            loginHint.textContent = 'Только латинские буквы, цифры и "_"';
+            loginHint.className = 'hint error';
+          } else if (!data.available) {
+            loginHint.textContent = 'Логин уже занят';
+            loginHint.className = 'hint error';
+          } else {
+            loginHint.textContent = 'Логин свободен';
+            loginHint.className = 'hint ok';
+          }
+        } catch (err) {}
+      }, 300);
+    });
+
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    regForm.addEventListener('submit', (e) => {
+      const errors = [];
+      const login = loginInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(login)) errors.push('Некорректный логин.');
+      if (email.length > 254 || /[<>"']/.test(email) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errors.push('Некорректный email.');
+      }
+      if (!/^(?=.*[A-Za-z])(?=.*\d).{6,128}$/.test(password)) errors.push('Пароль слишком простой или короткий.');
+
+      const box = document.getElementById('formErrors');
+      box.replaceChildren();
+      if (errors.length) {
+        e.preventDefault();
+        for (const message of errors) {
+          const item = document.createElement('li');
+          item.textContent = message;
+          box.appendChild(item);
+        }
+        return;
+      }
+
+      loginInput.value = login;
+      emailInput.value = email;
+    });
+  </script>
+</body>
+</html>

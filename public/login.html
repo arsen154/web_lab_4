@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <img src="logo.png" alt="Логотип" class="logo">
+    <h1>Вход</h1>
+    <p class="muted">Для тех, кто уже зарегистрирован. Email заново не нужен.</p>
+
+    <form id="loginForm" action="/login" method="POST" novalidate>
+      <label>
+        Логин
+        <input type="text" name="login" id="login" required minlength="3" maxlength="20"
+               pattern="[A-Za-z0-9_]+" autocomplete="username">
+        <span class="hint">Тот же логин, что при регистрации</span>
+      </label>
+
+      <label>
+        Пароль
+        <input type="password" name="password" id="password" required minlength="6" maxlength="128" autocomplete="current-password">
+        <span class="hint">Пароль от этого аккаунта</span>
+      </label>
+
+      <ul class="errors" id="formErrors"></ul>
+
+      <button type="submit" class="button">Войти</button>
+    </form>
+    <p class="switch">Нет аккаунта? <a href="register.html">Зарегистрироваться</a></p>
+  </main>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const loginInput = document.getElementById('login');
+    const passwordInput = document.getElementById('password');
+    const serverOrigin = location.port === '3000' ? '' : 'http://localhost:3000';
+    loginForm.action = serverOrigin + '/login';
+
+    loginForm.addEventListener('submit', (e) => {
+      const errors = [];
+      const login = loginInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(login)) errors.push('Некорректный логин.');
+      if (!/^(?=.*[A-Za-z])(?=.*\d).{6,128}$/.test(password)) errors.push('Некорректный пароль.');
+
+      const box = document.getElementById('formErrors');
+      box.replaceChildren();
+      if (errors.length) {
+        e.preventDefault();
+        for (const message of errors) {
+          const item = document.createElement('li');
+          item.textContent = message;
+          box.appendChild(item);
+        }
+        return;
+      }
+
+      loginInput.value = login;
+    });
+  </script>
+</body>
+</html>
